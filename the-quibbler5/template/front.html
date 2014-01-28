@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/static/main.css" />
+    <title>DasBlog</title>
+  </head>
+
+  <body>
+    <a href="/hw3" class="main-title">
+      DasBlog
+    </a>
+    <div id="content">
+	{% for post in posts %}
+      <div class="post">
+	    <div class="post-heading">
+          <a href="/hw3/{{post.key().id()}}" class="post-title">
+            {{post.title}}
+          </a>
+
+          <div class="post-date">
+            {{post.time}}
+          </div>
+        </div>
+
+        <div class="post-content">
+          {{post.content}}
+        </div>
+      </div>
+      <br/><br/>
+	{% endfor %}
+    </div>
+  </body>
+
+</html>

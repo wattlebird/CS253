@@ -1,69 +1,56 @@
-#!/usr/bin/env python
-#
-# Copyright 2007 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+import os
 import webapp2
-import ifvalid
+import jinja2
 
-form = """
-<form method = "post">
-    What is your birthday?<br>
-    <label>
-	Month
-	<input type = "text" name = "month" value = "%(month)s">
-    </label>
-    <label>
-	Day
-	<input type = "text" name = "day" value = "%(day)s">
-    </label>
-    <label>
-	Year
-	<input type = "text" name = "year" value = "%(year)s">
-    </label>
-    <div style="color: red">%(error)s</div>
-    <br><br>
-    <input type = "submit">
-</form>
-"""
+from google.appengine.ext import db
 
-class MainHandler(webapp2.RequestHandler):
-    def write_form(self, error="", month="", day="", year=""):
-        self.response.out.write(form % {"error":error,
-                                        "month":month,
-                                        "day":day,
-                                        "year":year})
+template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape=True)
+
+class Post(db.Model):
+    title = db.StringProperty(required = True)
+    content = db.TextProperty(required = True)
+    time = db.DateTimeProperty(auto_now_add = True)
+
+class Handler(webapp2.RequestHandler):
+    def write(self, *a, **kw):
+        self.response.out.write(*a, **kw)
+        
+    def render_str(self, template, **params):
+        t = jinja_env.get_template(template)
+        return t.render(params)
+    
+    def render(self, template, **kw):
+        self.write(self.render_str(template, **kw))
+
+class FrontPageHandler(Handler):
     def get(self):
-        self.write_form()
+        posts = db.GqlQuery("Select * from Post order by time desc")
+        self.render("front.html", posts = posts)
+
+class NewPostHandler(Handler):
+    def get(self):
+        self.render("newpost.html", title="", blog="", error="")
+
     def post(self):
-	user_month = self.request.get('month')
-	user_day = self.request.get('day')
-	user_year = self.request.get('year')
+        title = self.request.get("subject")
+        blog = self.request.get("blog")
 
-	month = ifvalid.valid_month(user_month)
-	day = ifvalid.valid_day(user_day)
-	year = ifvalid.valid_year(user_year)
-
-	if not(month and day and year):
-            self.write_form("That doesn't look valid to me, friend.",
-                            ifvalid.escape_html(user_month),
-                            ifvalid.escape_html(user_day),
-                            ifvalid.escape_html(user_year))
+        if title and blog:
+            a = Post(idn = id_number, title = title, content = blog)
+            a.put()
+            self.redirect("/hw3")
         else:
-            self.response.out.write("Thanks! That's a totally valid day!:)")
-                
+            error = "Blog submit failed."
+            self.render("newpost.html", title = title, blog = blog, error = error)
+            
 
-app = webapp2.WSGIApplication([
-    ('/', MainHandler)
-], debug=True)
+class ArticleHandler(Handler):
+    def get(self, article_id):
+        post = Post.get_by_id(int(article_id))
+        self.render("entity.html", title = post.title, time = post.time, content= post.content)
+
+app = webapp2.WSGIApplication([('/hw3', FrontPageHandler)],
+                              [('/hw3/newpost', NewPostHandler)],
+                              [(r'/unit3/blog/(\d+)'), ArticleHandler]
+                              )debug=True)
