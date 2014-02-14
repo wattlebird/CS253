@@ -1,26 +1,21 @@
-import os
+
 import webapp2
-import jinja2
+import json
 
 import secure
 import validcheck
 import database
+import head
 
 ### For templated document ###
-template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
-                               autoescape = True)
 
-def render_str(template, **params):
-    t = jinja_env.get_template(template)
-    return t.render(params)
 
 class BasicHandler(webapp2.RequestHandler):
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
     def render_str(self, template, **params):
-        return render_str(template, **params)
+        return head.render_str(template, **params)
 
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
@@ -33,7 +28,7 @@ class Signup(BasicHandler):
         if user_cookie_str:
             cookie_val = secure.check_secure_val(user_cookie_str)
             if cookie_val:
-                self.redirect('/hw4/welcome')
+                self.redirect('/hw/welcome')
         self.render("signup-form.html")
 
     def post(self):
@@ -78,8 +73,8 @@ class Signup(BasicHandler):
                 a = database.Users(user = username, password = secure.hash_str(password))
             a.put()
             new_cookie = secure.make_secure_val(username)
-            self.response.headers.add_header('Set-Cookie','user='+str(new_cookie)+';Path=/hw4/welcome')
-            self.redirect('/hw4/welcome')
+            self.response.headers.add_header('Set-Cookie','user='+str(new_cookie)+';Path=/hw/welcome')
+            self.redirect('/hw/welcome')
 
 
 
@@ -91,9 +86,9 @@ class Welcome(BasicHandler):
             if user:
                 self.render('welcome.html', username = user)
             else:
-                self.redirect('/hw4/signup')
+                self.redirect('/hw/signup')
         else:
-            self.redirect('/hw4/signup')
+            self.redirect('/hw/signup')
 
 class Login(BasicHandler):
     def get(self):
@@ -109,15 +104,77 @@ class Login(BasicHandler):
 
         if li != None and li.user == username and secure.hash_str(password) == li.password:
             new_cookie = secure.make_secure_val(username)
-            self.response.headers.add_header('Set-Cookie','user='+str(new_cookie)+';Path=/hw4/welcome')
-            self.redirect('/hw4/welcome')
+            self.response.headers.add_header('Set-Cookie','user='+str(new_cookie)+';Path=/hw/welcome')
+            self.redirect('/hw/welcome')
         else:
             self.render("login-form.html", error = "Invalid login.")
 
 class Logout(BasicHandler):
     def get(self):
-        self.response.delete_cookie('user', path='/hw4/welcome')
-        self.redirect('/hw4/signup')
+        self.response.delete_cookie('user', path='/hw/welcome')
+        self.redirect('/hw/signup')
+        
+##### blog stuff
+
+
+
+class BlogFront(BasicHandler):
+    def get(self):
+        posts = database.db.GqlQuery("select * from Post order by created desc")
+        self.render('front.html', posts = posts)
+
+class PostPage(BasicHandler):
+    def get(self, post_id):
+        key = database.db.Key.from_path('Post', int(post_id), parent=database.blog_key())
+        post = database.db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+
+        self.render("permalink.html", post = post)
+
+class NewPost(BasicHandler):
+    def get(self):
+        self.render("newpost.html")
+
+    def post(self):
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+
+        if subject and content:
+            p = database.Post(parent = database.blog_key(), subject = subject, content = content)
+            p.put()
+            self.redirect('/hw/%s' % str(p.key().id()))
+        else:
+            error = "subject and content, please!"
+            self.render("newpost.html", subject=subject, content=content, error=error)
+
+class FrontJson(webapp2.RequestHandler):
+    def get(self):
+        self.response.headers['Content-Type']='application/json'
+
+        posts = database.db.GqlQuery("select * from Post order by created desc")
+        l = []
+        for p in posts:
+            e = dict(content = p.content, created = p.created.strftime("%b %d, %Y"),
+                last_modified = p.last_modified.strftime("%b %d, %Y"), subject = p.subject)
+            l.append(e)
+        jsontext = json.dumps(l)
+
+        self.response.out.write(jsontext)
+
+class PostJson(webapp2.RequestHandler):
+    def get(self, post_id):
+        self.response.headers['Content-Type']='application/json'
+
+        key = database.db.Key.from_path('Post', int(post_id), parent=database.blog_key())
+        post = database.db.get(key)
+        e = dict(content = post.content, created = post.created.strftime("%b %d, %Y"),
+                last_modified = post.last_modified.strftime("%b %d, %Y"), subject = post.subject)
+        jsontext = json.dumps(e)
+
+        self.response.out.write(jsontext)
         
 
 class MainPage(BasicHandler):
@@ -125,9 +182,14 @@ class MainPage(BasicHandler):
       self.write('Hello, Udacity!')
 
 app = webapp2.WSGIApplication([('/', MainPage),
-                               ('/hw4/signup', Signup),
-                               ('/hw4/welcome', Welcome),
-                               ('/hw4/login', Login),
-                               ('/hw4/logout', Logout)
+                               ('/hw/signup', Signup),
+                               ('/hw/welcome', Welcome),
+                               ('/hw/login', Login),
+                               ('/hw/logout', Logout),
+                               ('/hw', BlogFront),
+                               ('/hw/([0-9]+)', PostPage),
+                               ('/hw/newpost', NewPost),
+                               ('/hw/.json', FrontJson),
+                               ('/hw/([0-9]+).json', PostJson)
                                ],
                               debug=True)
