@@ -6,6 +6,7 @@ import secure
 import validcheck
 import database
 import head
+import cache
 
 ### For templated document ###
 
@@ -120,19 +121,21 @@ class Logout(BasicHandler):
 
 class BlogFront(BasicHandler):
     def get(self):
-        posts = database.db.GqlQuery("select * from Post order by created desc")
-        self.render('front.html', posts = posts)
+        #global timer
+        posts = cache.top_articles()
+        self.render('front.html', posts = posts, age = int(cache.time.time()-cache.timer))
 
 class PostPage(BasicHandler):
     def get(self, post_id):
+        #global per_timer
         key = database.db.Key.from_path('Post', int(post_id), parent=database.blog_key())
-        post = database.db.get(key)
+        post = cache.per_article(key)
 
         if not post:
             self.error(404)
             return
 
-        self.render("permalink.html", post = post)
+        self.render("permalink.html", post = post, age = int(cache.time.time()-cache.per_timer[str(key)]))
 
 class NewPost(BasicHandler):
     def get(self):
@@ -145,10 +148,16 @@ class NewPost(BasicHandler):
         if subject and content:
             p = database.Post(parent = database.blog_key(), subject = subject, content = content)
             p.put()
+            cache.top_articles(True)
             self.redirect('/hw/%s' % str(p.key().id()))
         else:
             error = "subject and content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
+
+class FluchCache(BasicHandler):
+    def get(self):
+        cache.memcache.flush_all()
+        self.redirect('/hw')
 
 class FrontJson(webapp2.RequestHandler):
     def get(self):
@@ -189,6 +198,7 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/hw', BlogFront),
                                ('/hw/([0-9]+)', PostPage),
                                ('/hw/newpost', NewPost),
+                               ('/hw/flush', FluchCache),
                                ('/hw/.json', FrontJson),
                                ('/hw/([0-9]+).json', PostJson)
                                ],
