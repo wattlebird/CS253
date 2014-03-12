@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Login Page</title>
+    <style type="text/css">
+      .label {text-align: right}
+      .error {color: red; text-align: left}
+    </style>
+
+  </head>
+
+  <body>
+    <h2>Login</h2>
+    <form method="post">
+   	 <label class=label>
+   	 	Username:
+		<input type="text" name="username">
+   	 </label>
+   	 <br/>
+   	 <label class=label>
+   	 	Password:
+      	<input type="password" name="password">
+     <label/>
+     <br/>
+
+     <div class="error">
+      	{{error}}
+     </div>
+
+     <input type="submit">
+    </form>
+  </body>
+
+</html>

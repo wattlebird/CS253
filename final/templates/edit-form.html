@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="main.css" />
+		<title>Final Wiki</title>
+
+	</head>
+
+	<body>
+		<a href="/" class="title">Final Wiki</a>
+		<div class="login-area">
+			<a class="login-link" href="/{{content.title}}">view</a>|
+			<a class="login-link" href="/_history/{{content.title}}">history</a> 
+			{{user.name}}(<a class="login-link" href="/hw/logout">logout</a>)
+		</div>
+		<div>
+			<form action="/{{content.title}}" method="post">
+				<textarea name="content" class="text-area" rows="100" cols="400">{{content.body}}</textarea><br>
+				<input type="submit" name="save"/>
+			</form>
+		</div>
+	</body>
+</html>
