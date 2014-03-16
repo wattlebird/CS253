@@ -1,5 +1,22 @@
-.title{
+body {
+    position: relative;
+    font-family: Helvetica, 'times roman', Arial, sans-serif;
+    font-size: 14px;
 
+    width: 800px;
+    margin: 0 auto;
+    padding: 10px;
+    color: #333;
+}
+
+.title{
+	display: block;
+    color: #222;
+    font-size: 40px;
+    font-weight: bold;
+    text-align: left;
+    margin-bottom: 30px;
+    text-decoration: none;
 }
 
 .login-area{
@@ -7,10 +24,6 @@
 }
 
 .login-link{
-
-}
-
-.content-title{
 
 }
 

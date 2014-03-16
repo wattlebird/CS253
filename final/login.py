@@ -7,9 +7,13 @@ import webapp2
 class LoginHandler(head.BasicHandler):
 	def get(self):
 		cookie_val = self.request.cookies.get('user')
-		if cookie_val:
-			if secure.check_secure_val(cookie_val):
-				self.redirect('/')
+		cookie_page = self.request.cookies.get('prev')
+                if cookie_val and secure.check_secure_val(cookie_val):
+                        if secure.check_secure_val(cookie_page):
+                                previous_page = cookie_page.split('|')[0]
+                                self.redirect('/%s'%previous_page)
+                        else:
+                                self.redirect('/')
 		self.render("login-form.html")
 
 	def post(self):
@@ -17,6 +21,7 @@ class LoginHandler(head.BasicHandler):
 		username = self.request.get('username')
 		password = self.request.get('password')
 
+                hashvalue = None
 		if not validcheck.valid_username(username):
                 	have_error = True
                 else:
@@ -26,7 +31,7 @@ class LoginHandler(head.BasicHandler):
                         else:
                                 hashvalue = q.get().hashed_password
 
-                if not validcheck.valid_password(password):
+                if not validcheck.valid_password(password) or not hashvalue:
                         have_error = True
                 elif not secure.check_password(username, password, hashvalue):
                         have_error = True
@@ -37,12 +42,21 @@ class LoginHandler(head.BasicHandler):
                 else:
                         cookie_val = secure.make_secure_val(username)
                         self.response.set_cookie('user', cookie_val)
-                        self.redirect('/')
+                        cookie_page = self.request.cookies.get('prev')
+                        if cookie_page and secure.check_secure_val(cookie_page):
+                                self.redirect('/%s'%cookie_page.split('|')[0])
+                        else:
+                                self.redirect('/')
+
 
 class LogoutHandler(head.BasicHandler):
         def get(self):
                 self.response.delete_cookie('user')
-                self.redirect('/')
+                cookie_page = self.request.cookies.get('prev')
+                if cookie_page and secure.check_secure_val(cookie_page):
+                        self.redirect('/%s'%cookie_page.split('|')[0])
+                else:
+                        self.redirect('/')
 
 app = webapp2.WSGIApplication([
         ('/login',LoginHandler),

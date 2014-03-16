@@ -33,6 +33,9 @@ class MainHandler(head.BasicHandler):
             q = database.Users.query(database.Users.user == username)
             user = q.get()
 
+        cookie_page = secure.make_secure_val(title)
+        self.response.set_cookie('prev', cookie_page)
+
         version_str = self.request.get('v')
         if version_str:
             version_num = int(version_str)
@@ -84,6 +87,9 @@ class EditHandler(head.BasicHandler):
     def post(self, title):
         body = self.request.get('content')
         title = self.request.get('title')
+        if title =='/':
+            title = ''
+        #self.response.out.write(title)
         q = database.Post.query(database.Post.title == title).order(-database.Post.version)
         e = q.get()
         new_e = database.Post(title = title, body = body, version = e.version+1)

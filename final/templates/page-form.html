@@ -20,15 +20,9 @@
 				<a class="login-link" href="/signup">signup</a>
 			{% endif %}
 		</div>
-		<div id = "content-title">
-			{{content.title}}
-		</div>
 		<div id = "content-body">
-			{{content.body}}
+			{{content.body|safe}}
 		</div>
 
-		<div>
-			Debug Info:{{debug}}
-		</div>
 	</body>
 </html>
