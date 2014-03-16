@@ -12,7 +12,7 @@ handlers:
 - url: /signup
   script: signup.app
 
-- url: /login
+- url: /(login|logout)
   script: login.app
 
 - url: /.*

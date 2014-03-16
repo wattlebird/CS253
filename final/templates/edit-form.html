@@ -2,7 +2,7 @@
 
 <html>
 	<head>
-		<link rel="stylesheet" type="text/css" href="main.css" />
+		<link rel="stylesheet" type="text/css" href="/static/main.css" />
 		<title>Final Wiki</title>
 
 	</head>
@@ -12,13 +12,16 @@
 		<div class="login-area">
 			<a class="login-link" href="/{{content.title}}">view</a>|
 			<a class="login-link" href="/_history/{{content.title}}">history</a> 
-			{{user.name}}(<a class="login-link" href="/hw/logout">logout</a>)
+			{{user.user}}(<a class="login-link" href="/logout">logout</a>)
 		</div>
 		<div>
-			<form action="/{{content.title}}" method="post">
-				<textarea name="content" class="text-area" rows="100" cols="400">{{content.body}}</textarea><br>
-				<input type="submit" name="save"/>
+			<form action="/_edit/{{content.title}}" method="post">
+				<input type="hidden" name="title" value={{content.title}} />
+				<textarea name="content" rows="15" cols="80">{{content.body}}</textarea><br>
+				<input type="submit"/>
 			</form>
+			
 		</div>
+
 	</body>
 </html>

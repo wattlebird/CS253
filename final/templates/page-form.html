@@ -2,7 +2,7 @@
 
 <html>
 	<head>
-		<link rel="stylesheet" type="text/css" href="main.css" />
+		<link rel="stylesheet" type="text/css" href="/static/main.css" />
 		<title>Final Wiki</title>
 
 	</head>
@@ -13,7 +13,7 @@
 			{% if user %}
 				<a class="login-link" href="/_edit/{{content.title}}">edit</a>|
 				<a class="login-link" href="/_history/{{content.title}}">history</a> 
-				{{user.name}}(<a class="login-link" href="/hw/logout">logout</a>)
+				{{user.user}}(<a class="login-link" href="/logout">logout</a>)
 			{% else %}
 				<a class="login-link" href="/_history/{{content.title}}">history</a> 
 				<a class="login-link" href="/login">login</a>|
@@ -27,5 +27,8 @@
 			{{content.body}}
 		</div>
 
+		<div>
+			Debug Info:{{debug}}
+		</div>
 	</body>
 </html>

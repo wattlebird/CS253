@@ -1,12 +1,12 @@
 import hashlib
-import hmac
+
 import string
 import random
 
-SECRET = scut
+SECRET = 'scut'
 
 def hash_str(s):
-	return hmac.new(s,SECRET).hexdigest()
+	return hashlib.sha256(s+SECRET).hexdigest()
 
 def make_secure_val(s):
         return "%s|%s" % (s, hash_str(s))
@@ -27,4 +27,4 @@ def hashed_password(user, pw, salt = None):
 
 def check_password(user, pw, h):
 	salt = h.split('|')[1]
-	return h == hashed_password(name, pw, salt)
+	return h == hashed_password(user, pw, salt)

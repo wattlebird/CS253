@@ -1,6 +1,7 @@
 import head
 import validcheck
 import secure
+import database
 import webapp2
 
 class SignupHandler(head.BasicHandler):
@@ -25,7 +26,7 @@ class SignupHandler(head.BasicHandler):
                 	have_error = True
                 	param['error_username'] = 'Invalid Username'
                 else:
-                	q = database.Users.query_users('user == %s'%username)
+                	q = database.Users.query(database.Users.user == username)
                 	if q.get():
                 		have_error = True
                 		param['error_username'] = 'User already exists'
@@ -34,11 +35,11 @@ class SignupHandler(head.BasicHandler):
                 	have_error = True
                 	param['error_password'] = 'Invalid Password'
                 else:
-                	if password != verify
-                	have_error = True
-                	param['error_verify']= 'Passwords didn\'t match.'
+                	if password != verify:
+                                have_error = True
+                                param['error_verify']= 'Passwords didn\'t match.'
 
-                if not valid_email(email):
+                if not validcheck.valid_email(email):
                 	have_error = True
                 	param['error_email'] = 'Invalid Email'
 
@@ -46,13 +47,16 @@ class SignupHandler(head.BasicHandler):
                 	self.render("signup-form.html", **param)
                 else:
                 	if email:
-                		kk = database.User(user = username, hashed_password = secure.hashed_password(username, password),
+                		kk = database.Users(user = username, hashed_password = secure.hashed_password(username, password),
                 			email = email)	
                 	else:
-                		kk = database.User(user = username, hashed_password = secure.hashed_password(username, password))
+                		kk = database.Users(user = username, hashed_password = secure.hashed_password(username, password))
                 	kk.put()
                 	cookie_val = secure.make_secure_val(username)
                 	self.response.set_cookie('user', cookie_val)
                         self.redirect('/')
 
 
+app = webapp2.WSGIApplication([
+        ('/signup',SignupHandler)
+], debug=True)

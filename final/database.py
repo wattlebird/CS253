@@ -7,18 +7,15 @@ def user_key():
 class Users(ndb.Model):
     user = ndb.StringProperty(required = True)
     hashed_password = ndb.StringProperty(required = True)
-    email = ndb.EmailProperty()
+    email = ndb.StringProperty()
 
 
 
-    
-def blog_key(name = 'default'):
-    return ndb.Key.from_path('Post', name)
 
 
 class Post(ndb.Model):
     title = ndb.StringProperty(required = True)
     body = ndb.TextProperty(required = True)
+    version = ndb.IntegerProperty(required = True)
     created = ndb.DateTimeProperty(auto_now_add = True)
-    last_modified = ndb.DateTimeProperty(auto_now = True)
 
