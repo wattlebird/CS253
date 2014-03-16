@@ -25,6 +25,8 @@ import database
 
 class MainHandler(head.BasicHandler):
     def get(self, title):
+        global current_title
+        current_title = title
         cookie_val = self.request.cookies.get('user')
         if not cookie_val or not secure.check_secure_val(cookie_val):
             user = None
@@ -62,7 +64,11 @@ class MainHandler(head.BasicHandler):
 class EditHandler(head.BasicHandler):
 
     def get(self, title):
+        global current_title
+        current_title = title
 	cookie_val = self.request.cookies.get('user')
+        #cookie_page = secure.make_secure_val(title)
+        #self.response.set_cookie('prev', cookie_page)
         if not(cookie_val and secure.check_secure_val(cookie_val)):
             user = None
         else:
@@ -86,13 +92,17 @@ class EditHandler(head.BasicHandler):
 
     def post(self, title):
         body = self.request.get('content')
-        title = self.request.get('title')
-        if title =='/':
-            title = ''
-        #self.response.out.write(title)
-        q = database.Post.query(database.Post.title == title).order(-database.Post.version)
+        cookie_page = self.request.cookies.get('prev')
+        if cookie_page and secure.check_secure_val(cookie_page):
+            title = cookie_page.split('|')[0]
+        else:
+            title = current_title
+        q = database.Post.query(database.Post.title == current_title).order(-database.Post.version)
         e = q.get()
-        new_e = database.Post(title = title, body = body, version = e.version+1)
+        if e:
+            new_e = database.Post(title = title, body = body, version = e.version+1)
+        else:
+            new_e = database.Post(title = title, body = body, version = 1)
         new_e.put()
         self.redirect('/%s'%title)
 
